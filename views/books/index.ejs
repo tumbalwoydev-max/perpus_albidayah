@@ -1,0 +1,81 @@
+<%- include('../partials/header') %>
+
+<div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Data Master Buku</h1>
+        <p class="text-sm text-gray-500 mt-1">Kelola data buku perpustakaan dan stok ketersediaannya.</p>
+    </div>
+    <a href="/admin/books/create" class="inline-flex items-center justify-center py-2.5 px-4 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 transition gap-2">
+        <i data-lucide="plus" class="w-4 h-4"></i> Tambah Buku
+    </a>
+</div>
+
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cover</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Judul Buku</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Penulis</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stok</th>
+                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                <% if(books.length > 0) { %>
+                    <% books.forEach((book, index) => { %>
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= index + 1 %></td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <% if(book.cover_path) { %>
+                                    <div class="w-10 h-14 rounded overflow-hidden border border-gray-200 shadow-sm bg-white">
+                                        <img src="<%= book.cover_path %>" alt="Cover" class="w-full h-full object-cover">
+                                    </div>
+                                <% } else { %>
+                                    <div class="w-10 h-14 rounded bg-gray-100 flex items-center justify-center text-gray-400 border border-gray-200">
+                                        <i data-lucide="book" class="w-5 h-5"></i>
+                                    </div>
+                                <% } %>
+                            </td>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900 border-b border-gray-100"><%= book.title %></td>
+                            <td class="px-6 py-4 text-sm text-gray-500"><%= book.author %></td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <% if(book.stock > 0) { %>
+                                    <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-medium">
+                                        <%= book.stock %>
+                                    </span>
+                                <% } else { %>
+                                    <span class="px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 text-xs font-medium">
+                                        Habis
+                                    </span>
+                                <% } %>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-2">
+                                <a href="/admin/books/edit/<%= book.id %>" class="text-amber-600 hover:text-amber-900 bg-amber-50 p-1.5 rounded-md transition" title="Edit">
+                                    <i data-lucide="edit-2" class="w-4 h-4"></i>
+                                </a>
+                                <form action="/admin/books/delete/<%= book.id %>" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data buku ini? Semua transaksi dari buku ini mungkin ikut terkapus/rusak.')">
+                                    <button type="submit" class="text-red-600 hover:text-red-900 bg-red-50 p-1.5 rounded-md transition" title="Hapus">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center">
+                            <i data-lucide="book-copy" class="w-12 h-12 mx-auto text-gray-300 mb-3"></i>
+                            <p class="text-gray-500">Belum ada data buku perpustakaan.</p>
+                            <a href="/admin/books/create" class="text-emerald-600 font-medium text-sm hover:underline mt-1 inline-block">Mulai tambahkan buku</a>
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

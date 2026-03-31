@@ -1,0 +1,95 @@
+<%- include('../partials/header') %>
+
+<div class="mb-6">
+    <a href="/transactions/scan" class="inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-700 transition mb-4 gap-1">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i> Kembali ke Scanner
+    </a>
+    <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Proses Peminjaman Baru</h1>
+    <p class="text-sm text-gray-500 mt-1">Verifikasi identitas dan tentukan buku yang hendak dipinjam.</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+    <!-- Identitas Siswa Card -->
+    <div class="md:col-span-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
+        <div class="bg-emerald-600 h-24 absolute top-0 w-full left-0 z-0"></div>
+        <div class="p-6 relative z-10 text-center mt-6">
+            <div class="w-24 h-24 mx-auto bg-white rounded-full border-4 border-white shadow-md flex items-center justify-center p-2 mb-4">
+                <% if(student.qr_code_path) { %>
+                    <img src="<%= student.qr_code_path %>" alt="QR" class="w-full h-full object-contain">
+                <% } else { %>
+                    <i data-lucide="user" class="w-10 h-10 text-gray-300"></i>
+                <% } %>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900"><%= student.name %></h3>
+            <span class="inline-flex items-center mt-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-medium text-xs">
+                NISN: <%= student.nisn %>
+            </span>
+            <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between text-sm text-gray-600 px-4">
+                <span>Kelas:</span>
+                <span class="font-medium text-gray-900"><%= student.class %></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Transaksi -->
+    <div class="md:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <form action="/transactions/create" method="POST" class="space-y-6">
+            
+            <input type="hidden" name="student_id" value="<%= student.id %>">
+
+            <div>
+                <label for="book_id" class="block text-sm font-medium text-gray-700 mb-1">Pilih Buku Inventaris</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="book" class="w-5 h-5 text-gray-400"></i>
+                    </div>
+                    <select name="book_id" id="book_id" required
+                        class="pl-10 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm py-2 px-3 border bg-white">
+                        <option value="" disabled selected>Cari dan pilih judul buku...</option>
+                        <% books.forEach(book => { %>
+                            <option value="<%= book.id %>"><%= book.title %> (Stok: <%= book.stock %>) - <%= book.author %></option>
+                        <% }); %>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                    <label for="borrow_date" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Pinjam</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="calendar" class="w-5 h-5 text-gray-400"></i>
+                        </div>
+                        <input type="date" name="borrow_date" id="borrow_date" value="<%= defaultBorrowDate %>" required readonly
+                            class="pl-10 block w-full border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm py-2 px-3 border"
+                            title="Diisi otomatis mengikuti tanggal hari ini">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="expected_return_date" class="block text-sm font-medium text-gray-700 mb-1">Batas Waktu Pengembalian</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="calendar-clock" class="w-5 h-5 text-gray-400"></i>
+                        </div>
+                        <input type="date" name="expected_return_date" id="expected_return_date" value="<%= defaultExpectedDate %>" required
+                            class="pl-10 block w-full border-gray-300 rounded-lg shadow-sm text-emerald-700 font-medium focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm py-2 px-3 border">
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Estimasi default dihitung berdasarkan Konfigurasi Sekolah.</p>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 flex justify-end gap-3">
+                <a href="/transactions" class="inline-flex justify-center items-center py-2 px-4 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors">
+                    Nanti / Batal
+                </a>
+                <button type="submit" class="inline-flex justify-center items-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 transition-colors gap-2">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i> Validasi & Cetak Struk
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

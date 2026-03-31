@@ -1,0 +1,60 @@
+<%- include('partials/header') %>
+
+<div class="mb-8 outline-none">
+    <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center gap-2">
+        <i data-lucide="settings" class="w-8 h-8 text-emerald-600"></i>
+        Pengaturan Sekolah
+    </h1>
+    <p class="text-sm sm:text-base text-gray-500 mt-1">Konfigurasi data aplikasi dan aturan perpustakaan.</p>
+</div>
+
+<div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 max-w-2xl">
+    <form action="/settings" method="POST" class="space-y-6">
+        
+        <div>
+            <label for="school_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Sekolah</label>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i data-lucide="school" class="w-5 h-5 text-gray-400"></i>
+                </div>
+                <input type="text" name="school_name" id="school_name" value="<%= settings.school_name || '' %>" required
+                    class="pl-10 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm py-2 px-3 border" 
+                    placeholder="MI AL-BIDAYAH">
+            </div>
+            <p class="mt-1 text-xs text-gray-500">Akan tampil di header aplikasi.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label for="fine_per_day" class="block text-sm font-medium text-gray-700 mb-1">Denda per Hari (Rp)</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="coins" class="w-5 h-5 text-gray-400"></i>
+                    </div>
+                    <input type="number" name="fine_per_day" id="fine_per_day" value="<%= settings.fine_per_day || '0' %>" required
+                        class="pl-10 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm py-2 px-3 border">
+                </div>
+            </div>
+
+            <div>
+                <label for="max_borrow_days" class="block text-sm font-medium text-gray-700 mb-1">Lama Maksimal Pinjam (Hari)</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="calendar-clock" class="w-5 h-5 text-gray-400"></i>
+                    </div>
+                    <input type="number" name="max_borrow_days" id="max_borrow_days" value="<%= settings.max_borrow_days || '7' %>" required
+                        class="pl-10 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm py-2 px-3 border">
+                </div>
+            </div>
+        </div>
+
+        <div class="pt-4 border-t border-gray-100 flex justify-end">
+            <button type="submit" class="inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors gap-2">
+                <i data-lucide="save" class="w-4 h-4"></i> Simpan Pengaturan
+            </button>
+        </div>
+
+    </form>
+</div>
+
+<%- include('partials/footer') %>

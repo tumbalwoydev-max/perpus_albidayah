@@ -1,0 +1,78 @@
+<%- include('../partials/header') %>
+
+<div class="mb-6">
+    <a href="/admin/students" class="inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-700 transition mb-4 gap-1">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i> Kembali ke Data Siswa
+    </a>
+    <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Tambah Data Siswa</h1>
+    <p class="text-sm text-gray-500 mt-1">Isi form di bawah ini. QR Code akan digenerate otomatis berdasarkan NISN.</p>
+</div>
+
+<div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 max-w-2xl">
+    <% if(error) { %>
+        <div class="mb-6 bg-red-50 border border-red-200 text-red-600 rounded-lg p-4 flex gap-3 text-sm">
+            <i data-lucide="alert-circle" class="w-5 h-5 flex-shrink-0"></i> <span><%= error %></span>
+        </div>
+    <% } %>
+
+    <form action="/admin/students/create" method="POST" class="space-y-6" enctype="multipart/form-data">
+        
+        <div>
+            <label for="photo" class="block text-sm font-medium text-gray-700 mb-1">Foto Siswa (Opsional)</label>
+            <input type="file" name="photo" id="photo" accept="image/*"
+                class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 border border-gray-300 rounded-lg">
+        </div>
+
+        <div>
+            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i data-lucide="user" class="w-5 h-5 text-gray-400"></i>
+                </div>
+                <input type="text" name="name" id="name" required
+                    class="pl-10 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm py-2 px-3 border" 
+                    placeholder="Contoh: Ahmad Fadillah">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label for="nisn" class="block text-sm font-medium text-gray-700 mb-1">NISN (Nomor Induk Siswa Nasional)</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="hash" class="w-5 h-5 text-gray-400"></i>
+                    </div>
+                    <input type="text" name="nisn" id="nisn" required pattern="[0-9]{10}" title="NISN harus berisi 10 digit angka"
+                        class="pl-10 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm py-2 px-3 border"
+                        placeholder="0012345678">
+                </div>
+                <p class="mt-1 text-xs text-gray-500">Gunakan angka valid. Ini akan jadi Base Data QR Code.</p>
+            </div>
+
+            <div>
+                <label for="student_class" class="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="graduation-cap" class="w-5 h-5 text-gray-400"></i>
+                    </div>
+                    <select name="student_class" id="student_class" required
+                        class="pl-10 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm py-2 px-3 border bg-white">
+                        <option value="" disabled selected>Pilih Kelas</option>
+                        <% ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B'].forEach(c => { %>
+                            <option value="<%= c %>"><%= c %></option>
+                        <% }) %>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="pt-4 border-t border-gray-100 flex justify-end">
+            <button type="submit" class="inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors gap-2">
+                <i data-lucide="save" class="w-4 h-4"></i> Simpan Data
+            </button>
+        </div>
+
+    </form>
+</div>
+
+<%- include('../partials/footer') %>

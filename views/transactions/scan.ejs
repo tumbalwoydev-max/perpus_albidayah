@@ -1,0 +1,73 @@
+<%- include('../partials/header') %>
+
+<div class="mb-6">
+    <a href="/transactions" class="inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-700 transition mb-4 gap-1">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i> Riwayat Sirkulasi
+    </a>
+    <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Scan QR Code Siswa</h1>
+    <p class="text-sm text-gray-500 mt-1">Arahkan kamera HP/Laptop ke QR Code milik siswa untuk memulai peminjaman.</p>
+</div>
+
+<div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 max-w-xl mx-auto text-center" id="scan-container">
+    <% if(typeof error !== 'undefined' && error) { %>
+        <div class="mb-4 bg-red-50 border border-red-200 text-red-600 rounded-lg p-3 flex gap-2 text-sm justify-center">
+            <i data-lucide="alert-circle" class="w-5 h-5 flex-shrink-0"></i> <span><%= error %></span>
+        </div>
+    <% } %>
+
+    <div id="reader" class="mx-auto border-2 border-dashed border-emerald-300 rounded-xl overflow-hidden bg-gray-50" style="min-height: 300px;">
+        <!-- Camera feed injected here via JS -->
+        <div class="flex flex-col items-center justify-center p-8 text-gray-400 mt-12">
+            <i data-lucide="camera" class="w-12 h-12 mb-2 animate-pulse"></i>
+            <p>Memuat Kamera...</p>
+        </div>
+    </div>
+    
+    <div class="mt-6 flex justify-center gap-4 hidden" id="action-buttons">
+        <button id="stop-btn" class="inline-flex py-2 px-4 border border-red-200 shadow-sm text-sm font-medium rounded-lg text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none transition-colors">
+            Berhenti Scan
+        </button>
+        <button id="start-btn" class="inline-flex py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none transition-colors hidden">
+            Mulai Kamera Kembali
+        </button>
+    </div>
+    
+    <!-- Manual Input Fallback -->
+    <div class="mt-8 pt-6 border-t border-gray-100">
+        <p class="text-sm text-gray-500 mb-3 block">Kamera bermasalah? Input NISN secara manual:</p>
+        <form action="/transactions/create" method="GET" class="flex max-w-sm mx-auto shadow-sm">
+            <input type="text" name="nisn" placeholder="0012345678" required pattern="[0-9]{10}" class="flex-grow pl-3 py-2 border border-gray-300 rounded-l-lg focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+            <button type="submit" class="bg-emerald-600 text-white px-4 py-2 rounded-r-lg font-medium hover:bg-emerald-700 transition">Proses</button>
+        </form>
+    </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const scannerConfig = { fps: 10, qrbox: { width: 250, height: 250 } };
+        let html5QrcodeScanner = null;
+
+        function onScanSuccess(decodedText, decodedResult) {
+            // handle the scanned code as you like, for example:
+            if(html5QrcodeScanner) html5QrcodeScanner.clear(); // stop scanning
+            // Redirect to create translation for this nisn
+            window.location.href = `/transactions/create?nisn=${encodeURIComponent(decodedText)}`;
+        }
+
+        function onScanFailure(error) {
+            // handle scan failure, usually better to ignore and keep scanning.
+            // for debugging: console.warn(`Code scan error = ${error}`);
+        }
+
+        try {
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", scannerConfig, false);
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        } catch(e) {
+            console.error("Camera setup failed", e);
+        }
+    });
+</script>
+
+<%- include('../partials/footer') %>
