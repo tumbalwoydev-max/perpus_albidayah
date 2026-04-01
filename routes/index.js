@@ -1,8 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const { Op } = require('sequelize');
 const Setting = require('../models/Setting');
 const Admin = require('../models/Admin');
+const Student = require('../models/Student');
+const Book = require('../models/Book');
+const Transaction = require('../models/Transaction');
 
 router.get('/login', (req, res) => {
   if (req.session.admin) return res.redirect('/dashboard');
@@ -27,9 +31,47 @@ router.post('/login', async (req, res) => {
   }
 });
 
-router.get('/dashboard', (req, res) => {
+router.get('/dashboard', async (req, res) => {
   if (!req.session.admin) return res.redirect('/login');
-  res.render('dashboard', { title: 'Dashboard' });
+  
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    
+    const [total_students, total_books, borrowed_count, overdue_count, recent_transactions] = await Promise.all([
+      Student.count(),
+      Book.count(),
+      Transaction.count({ where: { return_date: null } }),
+      Transaction.count({ 
+        where: { 
+          return_date: null,
+          expected_return_date: { [Op.lt]: today }
+        } 
+      }),
+      Transaction.findAll({
+        limit: 5,
+        order: [['createdAt', 'DESC']],
+        include: [Student, Book]
+      })
+    ]);
+
+    res.render('dashboard', { 
+      title: 'Dashboard',
+      stats: {
+        total_students,
+        total_books,
+        borrowed_count,
+        overdue_count
+      },
+      recent_transactions
+    });
+  } catch (err) {
+    console.error('Dashboard error:', err);
+    res.render('dashboard', { 
+      title: 'Dashboard',
+      stats: { total_students: 0, total_books: 0, borrowed_count: 0, overdue_count: 0 },
+      recent_transactions: []
+    });
+  }
 });
 
 router.get('/settings', async (req, res) => {

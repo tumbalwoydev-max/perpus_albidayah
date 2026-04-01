@@ -11,7 +11,7 @@
     <div class="bg-white rounded-2xl p-6 shadow-sm border border-emerald-100 flex items-center justify-between hover:shadow-md transition">
         <div>
             <p class="text-sm font-medium text-emerald-600 mb-1">Total Siswa</p>
-            <h3 class="text-3xl font-bold text-gray-800">0</h3>
+            <h3 class="text-3xl font-bold text-gray-800"><%= stats.total_students %></h3>
         </div>
         <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
             <i data-lucide="users" class="w-6 h-6"></i>
@@ -22,7 +22,7 @@
     <div class="bg-white rounded-2xl p-6 shadow-sm border border-emerald-100 flex items-center justify-between hover:shadow-md transition">
         <div>
             <p class="text-sm font-medium text-emerald-600 mb-1">Total Buku</p>
-            <h3 class="text-3xl font-bold text-gray-800">0</h3>
+            <h3 class="text-3xl font-bold text-gray-800"><%= stats.total_books %></h3>
         </div>
         <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
             <i data-lucide="book-open" class="w-6 h-6"></i>
@@ -33,7 +33,7 @@
     <div class="bg-white rounded-2xl p-6 shadow-sm border border-emerald-100 flex items-center justify-between hover:shadow-md transition">
         <div>
             <p class="text-sm font-medium text-amber-600 mb-1">Sedang Dipinjam</p>
-            <h3 class="text-3xl font-bold text-gray-800">0</h3>
+            <h3 class="text-3xl font-bold text-gray-800"><%= stats.borrowed_count %></h3>
         </div>
         <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
             <i data-lucide="book-copy" class="w-6 h-6"></i>
@@ -44,7 +44,7 @@
     <div class="bg-white rounded-2xl p-6 shadow-sm border border-emerald-100 flex items-center justify-between hover:shadow-md transition">
         <div>
             <p class="text-sm font-medium text-red-600 mb-1">Terlambat Kembali</p>
-            <h3 class="text-3xl font-bold text-gray-800">0</h3>
+            <h3 class="text-3xl font-bold text-gray-800"><%= stats.overdue_count %></h3>
         </div>
         <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600">
             <i data-lucide="alert-circle" class="w-6 h-6"></i>
@@ -79,19 +79,61 @@
         </div>
     </div>
 
-    <!-- Recent Activities Placeholder -->
+    <!-- Recent Activities -->
     <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
             <i data-lucide="history" class="w-5 h-5 text-emerald-500"></i> Transaksi Terakhir
         </h2>
-        <!-- Empty State For now -->
-        <div class="flex flex-col items-center justify-center p-8 sm:p-12 text-center border-2 border-dashed border-gray-200 rounded-xl">
-            <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                <i data-lucide="inbox" class="w-8 h-8 text-gray-400"></i>
+        
+        <% if (recent_transactions.length === 0) { %>
+            <div class="flex flex-col items-center justify-center p-8 sm:p-12 text-center border-2 border-dashed border-gray-200 rounded-xl">
+                <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                    <i data-lucide="inbox" class="w-8 h-8 text-gray-400"></i>
+                </div>
+                <h3 class="text-gray-900 font-medium text-lg">Belum Ada Transaksi</h3>
+                <p class="text-gray-500 text-sm mt-1 max-w-sm">Data peminjaman dan pengembalian buku akan muncul di sini.</p>
             </div>
-            <h3 class="text-gray-900 font-medium text-lg">Belum Ada Transaksi</h3>
-            <p class="text-gray-500 text-sm mt-1 max-w-sm">Data peminjaman dan pengembalian buku akan muncul di sini.</p>
-        </div>
+        <% } else { %>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="text-xs uppercase text-gray-400 font-bold border-b border-gray-50">
+                            <th class="pb-3 pl-2">Siswa</th>
+                            <th class="pb-3">Buku</th>
+                            <th class="pb-3">Tanggal</th>
+                            <th class="pb-3 text-right pr-2">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        <% recent_transactions.forEach(t => { %>
+                            <tr class="group hover:bg-gray-50/50 transition">
+                                <td class="py-4 pl-2">
+                                    <div class="font-bold text-gray-800 text-sm"><%= t.Student ? t.Student.name : 'Unknown' %></div>
+                                    <div class="text-xs text-gray-500 italic"><%= t.Student ? t.Student.nisn : '-' %></div>
+                                </td>
+                                <td class="py-4">
+                                    <div class="text-sm text-gray-700 max-w-[150px] truncate font-medium"><%= t.Book ? t.Book.title : 'Unknown' %></div>
+                                </td>
+                                <td class="py-4">
+                                    <div class="text-xs text-gray-500"><%= t.borrow_date %></div>
+                                </td>
+                                <td class="py-4 text-right pr-2">
+                                    <% if (t.return_date) { %>
+                                        <span class="px-2.5 py-1 text-[10px] font-bold bg-gray-100 text-gray-600 rounded-full">DIKEMBALIKAN</span>
+                                    <% } else { 
+                                        const isOverdue = new Date(t.expected_return_date) < new Date();
+                                    %>
+                                        <span class="px-2.5 py-1 text-[10px] font-bold <%= isOverdue ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600' %> rounded-full">
+                                            <%= isOverdue ? 'TERLAMBAT' : 'DIPINJAM' %>
+                                        </span>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } %>
     </div>
 </div>
 
