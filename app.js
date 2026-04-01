@@ -16,15 +16,25 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Session Setup - Optimized for Vercel
+const SequelizeStore = require('connect-session-sequelize')(session.Store);
+const sessionStore = new SequelizeStore({
+  db: sequelize,
+});
+
 app.use(session({
   secret: 'perpus_mi_secret_key',
+  store: sessionStore,
   resave: false,
   saveUninitialized: false,
+  proxy: true, // Required for secure cookie behind Vercel proxy
   cookie: { 
     secure: process.env.NODE_ENV === 'production',
     maxAge: 24 * 60 * 60 * 1000 
   }
 }));
+
+// Sync session store
+sessionStore.sync();
 
 // Setup EJS
 app.set('view engine', 'ejs');

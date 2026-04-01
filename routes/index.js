@@ -1,20 +1,30 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcryptjs');
 const Setting = require('../models/Setting');
+const Admin = require('../models/Admin');
 
 router.get('/login', (req, res) => {
   if (req.session.admin) return res.redirect('/dashboard');
-  res.render('login', { title: 'Login' });
+  res.render('login', { title: 'Login', error: req.query.error });
 });
 
 router.post('/login', async (req, res) => {
-  // Dummy logic, real implementation will use Admin model and bcrypt
   const { username, password } = req.body;
-  if(username === 'admin' && password === 'admin123') { // hardcoded fallback checking
-    req.session.admin = { username: 'admin' };
-    return res.redirect('/dashboard');
+  
+  try {
+    const admin = await Admin.findOne({ where: { username } });
+    
+    if (admin && await bcrypt.compare(password, admin.password)) {
+      req.session.admin = { id: admin.id, username: admin.username };
+      return res.redirect('/dashboard');
+    }
+    
+    res.redirect('/login?error=Username atau password salah');
+  } catch (err) {
+    console.error('Login error:', err);
+    res.redirect('/login?error=Terjadi kesalahan pada server');
   }
-  res.redirect('/login');
 });
 
 router.get('/dashboard', (req, res) => {

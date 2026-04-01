@@ -10,6 +10,15 @@
             <p class="text-sm text-gray-500 mt-2">Masuk untuk mengelola <%= school_name %></p>
         </div>
 
+        <% if (locals.error) { %>
+            <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded-r-lg" role="alert">
+                <div class="flex items-center">
+                    <i data-lucide="alert-circle" class="mr-2 w-4 h-4"></i>
+                    <p><%= error %></p>
+                </div>
+            </div>
+        <% } %>
+
         <form action="/login" method="POST" class="space-y-5">
             <div>
                 <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
