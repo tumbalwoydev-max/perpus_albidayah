@@ -1,0 +1,17 @@
+{
+  "name": "Perpustakaan MI AL-BIDAYAH",
+  "short_name": "Perpus MI",
+  "description": "Sistem Manajemen Perpustakaan MI AL-BIDAYAH",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#059669",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
