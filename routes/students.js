@@ -8,17 +8,12 @@ const multer = require('multer');
 const sharp = require('sharp');
 
 // Multer storage configuration
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const dest = path.join(__dirname, '../public/uploads/students/');
-        cb(null, dest);
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname);
-    }
+// Multer storage configuration - Memory based for Vercel support
+const storage = multer.memoryStorage();
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
-
-const upload = multer({ storage: storage });
 
 // Middleware for authentication
 const checkAuth = (req, res, next) => {
@@ -45,38 +40,27 @@ router.get('/create', checkAuth, (req, res) => {
 // POST: Create student and generate QR code
 router.post('/create', checkAuth, upload.single('photo'), async (req, res) => {
     try {
-        console.log('Upload check - Photo file:', req.file);
         const { name, nisn, student_class } = req.body;
         
         // Check if NISN exists
         const exists = await Student.findOne({ where: { nisn } });
         if (exists) {
-            if (req.file) fs.unlinkSync(req.file.path); // Delete uploaded file
             return res.render('students/create', { title: 'Tambah Data Siswa', error: 'NISN sudah terdaftar!' });
         }
 
         // Process image with sharp if exists
-        let photoPath = null;
+        let photoBase64 = null;
         if (req.file) {
-            const originalPath = req.file.path;
-            const compressedFilename = `compressed-${req.file.filename}`;
-            const compressedPath = path.join(__dirname, '../public/uploads/students/', compressedFilename);
-            
-            await sharp(originalPath)
+            const buffer = await sharp(req.file.buffer)
                 .resize({ width: 500 })
                 .jpeg({ quality: 70 })
-                .toFile(compressedPath);
+                .toBuffer();
             
-            // Delete original file
-            fs.unlinkSync(originalPath);
-            photoPath = `/uploads/students/${compressedFilename}`;
+            photoBase64 = `data:image/jpeg;base64,${buffer.toString('base64')}`;
         }
 
-        // Generate QR Code with only NISN text (to scale well with scanners)
-        const qrFilename = `qr_${nisn}.png`;
-        const qrPath = path.join(__dirname, '../public/images/qrcodes', qrFilename);
-        
-        await QRCode.toFile(qrPath, nisn, {
+        // Generate QR Code as Data URL (Base64)
+        const qrBase64 = await QRCode.toDataURL(nisn, {
             color: {
                 dark: '#000000',
                 light: '#ffffff'
@@ -87,15 +71,14 @@ router.post('/create', checkAuth, upload.single('photo'), async (req, res) => {
         await Student.create({
             name,
             nisn,
-            class: student_class, // mapped because class is a JS keyword sometimes used differently but attribute is class
-            qr_code_path: `/images/qrcodes/${qrFilename}`,
-            photo_path: photoPath
+            class: student_class,
+            qr_code_path: qrBase64,
+            photo_path: photoBase64
         });
 
         res.redirect('/admin/students');
     } catch (err) {
-        console.error(err);
-        if (req.file) fs.unlinkSync(req.file.path);
+        console.error('Student Create Error:', err);
         res.render('students/create', { title: 'Tambah Data Siswa', error: 'Gagal menyimpan data.' });
     }
 });
@@ -115,36 +98,20 @@ router.get('/edit/:id', checkAuth, async (req, res) => {
 // POST: Edit student
 router.post('/edit/:id', checkAuth, upload.single('photo'), async (req, res) => {
     try {
-        console.log('Upload check - Photo file:', req.file);
         const { name, nisn, student_class } = req.body;
         const studentId = req.params.id;
 
         const student = await Student.findByPk(studentId);
-        if (!student) {
-            if (req.file) fs.unlinkSync(req.file.path);
-            return res.redirect('/admin/students');
-        }
+        if (!student) return res.redirect('/admin/students');
 
         // Process image with sharp if exists
         if (req.file) {
-            // Delete old photo if exists
-            if (student.photo_path) {
-                const oldPhotoPath = path.join(__dirname, '../public', student.photo_path);
-                if (fs.existsSync(oldPhotoPath)) fs.unlinkSync(oldPhotoPath);
-            }
-
-            const originalPath = req.file.path;
-            const compressedFilename = `compressed-${req.file.filename}`;
-            const compressedPath = path.join(__dirname, '../public/uploads/students/', compressedFilename);
-            
-            await sharp(originalPath)
+            const buffer = await sharp(req.file.buffer)
                 .resize({ width: 500 })
                 .jpeg({ quality: 70 })
-                .toFile(compressedPath);
+                .toBuffer();
             
-            // Delete original file
-            fs.unlinkSync(originalPath);
-            student.photo_path = `/uploads/students/${compressedFilename}`;
+            student.photo_path = `data:image/jpeg;base64,${buffer.toString('base64')}`;
         }
 
         // Check if changing NISN to one that already exists
@@ -154,15 +121,8 @@ router.post('/edit/:id', checkAuth, upload.single('photo'), async (req, res) => 
                 return res.render('students/edit', { title: 'Edit Data Siswa', student, error: 'NISN sudah digunakan siswa lain!' });
             }
             
-            // Generate new QR if NISN changes
-            const oldQrPath = path.join(__dirname, '../public', student.qr_code_path);
-            if (fs.existsSync(oldQrPath)) fs.unlinkSync(oldQrPath); // remove old
-
-            const newQrFilename = `qr_${nisn}.png`;
-            const newQrPath = path.join(__dirname, '../public/images/qrcodes', newQrFilename);
-            await QRCode.toFile(newQrPath, nisn);
-            
-            student.qr_code_path = `/images/qrcodes/${newQrFilename}`;
+            // Generate new QR as Data URL if NISN changes
+            student.qr_code_path = await QRCode.toDataURL(nisn);
             student.nisn = nisn;
         }
 
@@ -172,8 +132,7 @@ router.post('/edit/:id', checkAuth, upload.single('photo'), async (req, res) => 
 
         res.redirect('/admin/students');
     } catch (err) {
-        console.error(err);
-        if (req.file) fs.unlinkSync(req.file.path);
+        console.error('Student Edit Error:', err);
         res.redirect('/admin/students');
     }
 });
@@ -183,21 +142,11 @@ router.post('/delete/:id', checkAuth, async (req, res) => {
     try {
         const student = await Student.findByPk(req.params.id);
         if (student) {
-            // Delete QR Image
-            const qrPath = path.join(__dirname, '../public', student.qr_code_path);
-            if (fs.existsSync(qrPath)) fs.unlinkSync(qrPath);
-
-            // Delete Photo
-            if (student.photo_path) {
-                const photoPath = path.join(__dirname, '../public', student.photo_path);
-                if (fs.existsSync(photoPath)) fs.unlinkSync(photoPath);
-            }
-
             await student.destroy();
         }
         res.redirect('/admin/students');
     } catch (err) {
-        console.error(err);
+        console.error('Student Delete Error:', err);
         res.redirect('/admin/students');
     }
 });

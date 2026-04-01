@@ -16,7 +16,7 @@ const Book = sequelize.define('Book', {
     defaultValue: 0
   },
   cover_path: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT('long'),
     allowNull: true
   }
 });

@@ -16,11 +16,11 @@ const Student = sequelize.define('Student', {
     allowNull: false
   },
   qr_code_path: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT('long'),
     allowNull: true
   },
   photo_path: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT('long'),
     allowNull: true
   }
 });

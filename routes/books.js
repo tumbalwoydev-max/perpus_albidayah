@@ -7,17 +7,12 @@ const path = require('path');
 const fs = require('fs');
 
 // Multer storage configuration
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const dest = path.join(__dirname, '../public/uploads/books/');
-        cb(null, dest);
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname);
-    }
+// Multer storage configuration - Memory based for Vercel support
+const storage = multer.memoryStorage();
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
-
-const upload = multer({ storage: storage });
 
 // Middleware for authentication
 const checkAuth = (req, res, next) => {
@@ -44,36 +39,28 @@ router.get('/create', checkAuth, (req, res) => {
 // POST: Create Book
 router.post('/create', checkAuth, upload.single('cover'), async (req, res) => {
     try {
-        console.log('Upload check - Cover file:', req.file);
         const { title, author, stock } = req.body;
         
-        // Process image with sharp if exists
-        let coverPath = null;
+        let coverBase64 = null;
         if (req.file) {
-            const originalPath = req.file.path;
-            const compressedFilename = `compressed-${req.file.filename}`;
-            const compressedPath = path.join(__dirname, '../public/uploads/books/', compressedFilename);
-            
-            await sharp(originalPath)
+            // Process image with sharp from buffer
+            const buffer = await sharp(req.file.buffer)
                 .resize({ width: 500 })
                 .jpeg({ quality: 70 })
-                .toFile(compressedPath);
+                .toBuffer();
             
-            // Delete original file
-            fs.unlinkSync(originalPath);
-            coverPath = `/uploads/books/${compressedFilename}`;
+            coverBase64 = `data:image/jpeg;base64,${buffer.toString('base64')}`;
         }
 
         await Book.create({ 
             title, 
             author, 
             stock,
-            cover_path: coverPath
+            cover_path: coverBase64
         });
         res.redirect('/admin/books');
     } catch (err) {
-        console.error(err);
-        if (req.file) fs.unlinkSync(req.file.path);
+        console.error('Book Create Error:', err);
         res.render('books/create', { title: 'Tambah Data Buku', error: 'Gagal menyimpan data buku.' });
     }
 });
@@ -93,36 +80,20 @@ router.get('/edit/:id', checkAuth, async (req, res) => {
 // POST: Edit Book
 router.post('/edit/:id', checkAuth, upload.single('cover'), async (req, res) => {
     try {
-        console.log('Upload check - Cover file:', req.file);
         const { title, author, stock } = req.body;
         const bookId = req.params.id;
 
         const book = await Book.findByPk(bookId);
-        if (!book) {
-            if (req.file) fs.unlinkSync(req.file.path);
-            return res.redirect('/admin/books');
-        }
+        if (!book) return res.redirect('/admin/books');
 
-        // Process image with sharp if exists
         if (req.file) {
-            // Delete old cover if exists
-            if (book.cover_path) {
-                const oldCoverPath = path.join(__dirname, '../public', book.cover_path);
-                if (fs.existsSync(oldCoverPath)) fs.unlinkSync(oldCoverPath);
-            }
-
-            const originalPath = req.file.path;
-            const compressedFilename = `compressed-${req.file.filename}`;
-            const compressedPath = path.join(__dirname, '../public/uploads/books/', compressedFilename);
-            
-            await sharp(originalPath)
+            // Process buffer with sharp
+            const buffer = await sharp(req.file.buffer)
                 .resize({ width: 500 })
                 .jpeg({ quality: 70 })
-                .toFile(compressedPath);
+                .toBuffer();
             
-            // Delete original file
-            fs.unlinkSync(originalPath);
-            book.cover_path = `/uploads/books/${compressedFilename}`;
+            book.cover_path = `data:image/jpeg;base64,${buffer.toString('base64')}`;
         }
 
         book.title = title;
@@ -132,8 +103,7 @@ router.post('/edit/:id', checkAuth, upload.single('cover'), async (req, res) => 
 
         res.redirect('/admin/books');
     } catch (err) {
-        console.error(err);
-        if (req.file) fs.unlinkSync(req.file.path);
+        console.error('Book Edit Error:', err);
         res.redirect('/admin/books');
     }
 });
@@ -143,16 +113,11 @@ router.post('/delete/:id', checkAuth, async (req, res) => {
     try {
         const book = await Book.findByPk(req.params.id);
         if (book) {
-            // Delete Cover Photo
-            if (book.cover_path) {
-                const coverPath = path.join(__dirname, '../public', book.cover_path);
-                if (fs.existsSync(coverPath)) fs.unlinkSync(coverPath);
-            }
             await book.destroy();
         }
         res.redirect('/admin/books');
     } catch (err) {
-        console.error(err);
+        console.error('Book Delete Error:', err);
         res.redirect('/admin/books');
     }
 });
