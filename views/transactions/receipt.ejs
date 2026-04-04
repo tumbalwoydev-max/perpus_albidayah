@@ -38,7 +38,7 @@
         .line { border-bottom: 1px dashed #000; margin: 10px 0; }
 
         .row { display: flex; justify-content: space-between; margin-bottom: 5px; }
-        .row span.label { flex: 0 0 45%; text-align: left; }
+        .row span.label { flex: 0 0 50%; text-align: left; }
         .row span.value { flex: 1; text-align: right; font-weight: bold; word-break: break-word; }
 
         /* Print Media Query */
@@ -91,7 +91,7 @@
         </div>
 
         <div class="text-center mb-2">
-            <img src="/images/logo.png" alt="Logo" style="width: 40px; height: auto; margin-bottom: 5px;">
+            <img src="/images/logo.png" alt="Logo" style="width: 65px; height: auto; margin-bottom: 5px;">
             <h3 class="mb-1"><%= school_name %></h3>
             <p class="text-sm border-bottom">SISTEM PERPUSTAKAAN</p>
         </div>
@@ -125,7 +125,7 @@
             <span class="value"><%= transaction.borrow_date %></span>
         </div>
         <div class="row text-sm">
-            <span class="label">Batas Kemb Pdg:</span>
+            <span class="label">Batas Kembali:</span>
             <span class="value"><%= transaction.expected_return_date %></span>
         </div>
 
@@ -147,7 +147,7 @@
 
         <div class="text-center text-sm mb-3">
             <p class="mb-1">Terima Kasih!</p>
-            <p>Harap kembalikan buku tepat waktu agar terhindar dari denda memabukkan.</p>
+            <p>Harap kembalikan buku tepat waktu agar terhindar dari denda membengkak.</p>
         </div>
         
         <div class="text-center text-sm" style="margin-top:20px;">
