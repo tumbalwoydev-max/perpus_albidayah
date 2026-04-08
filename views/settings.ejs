@@ -57,4 +57,103 @@
     </form>
 </div>
 
+<!-- Bluetooth Printer Setup -->
+<div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 max-w-2xl mt-6">
+    <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2 mb-4">
+        <i data-lucide="printer" class="w-6 h-6 text-emerald-600"></i>
+        Printer Thermal Bluetooth
+    </h2>
+    <p class="text-sm text-gray-600 mb-4">
+        Hubungkan printer thermal Bluetooth (seperti Iware) untuk cetak struk otomatis tanpa dialog browser (Direct Print).
+    </p>
+    
+    <div class="flex items-center gap-3">
+        <button id="btn-connect-printer" type="button" class="inline-flex justify-center items-center py-2 px-4 border border-emerald-600 shadow-sm text-sm font-medium rounded-lg text-emerald-600 bg-white hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors gap-2">
+            <i data-lucide="bluetooth" class="w-4 h-4"></i> Hubungkan Printer
+        </button>
+        <button id="btn-test-printer" type="button" class="inline-flex justify-center items-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors gap-2">
+            <i data-lucide="file-check-2" class="w-4 h-4"></i> Test Print
+        </button>
+    </div>
+    
+    <p id="printer-status" class="mt-3 text-sm font-medium text-gray-500">
+        Status: <span class="text-red-500">Belum terhubung</span>
+    </p>
+</div>
+
+<script src="/js/printer.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const btnConnect = document.getElementById('btn-connect-printer');
+        const btnTest = document.getElementById('btn-test-printer');
+        const statusEl = document.getElementById('printer-status');
+
+        const updateStatus = () => {
+            const savedName = localStorage.getItem('bluetooth_printer_name');
+            if (window.escposPrinter.isConnected) {
+                statusEl.innerHTML = `Status: <span class="text-emerald-600 flex items-center gap-1"><i data-lucide="check-circle" class="w-4 h-4"></i> Terhubung ke ${window.escposPrinter.device.name}</span>`;
+                btnConnect.innerHTML = `<i data-lucide="refresh-cw" class="w-4 h-4"></i> Hubungkan Ulang`;
+                btnConnect.className = btnConnect.className.replace('text-emerald-600', 'text-orange-600').replace('border-emerald-600', 'border-orange-600');
+            } else if (savedName) {
+                statusEl.innerHTML = `Status: <span class="text-orange-500 flex items-center gap-1"><i data-lucide="history" class="w-4 h-4"></i> Pernah terhubung ke ${savedName}</span>`;
+                btnConnect.innerHTML = `<i data-lucide="bluetooth" class="w-4 h-4"></i> Hubungkan Sekarang`;
+            } else {
+                statusEl.innerHTML = `Status: <span class="text-red-500">Belum terhubung</span>`;
+            }
+            if(typeof lucide !== 'undefined') lucide.createIcons();
+        };
+        
+        // Coba auto-connect saat halaman dibuka
+        const autoSuccess = await window.escposPrinter.autoConnect();
+        updateStatus();
+
+        btnConnect.addEventListener('click', async () => {
+            statusEl.innerHTML = `Status: <span class="text-blue-500 animate-pulse">Menghubungkan...</span>`;
+            const success = await window.escposPrinter.connect();
+            updateStatus();
+            if (success) {
+                alert('Printer berhasil terhubung!');
+            }
+        });
+
+        // Listen for disconnection
+        window.addEventListener('printer-disconnected', () => {
+            updateStatus();
+        });
+
+        btnTest.addEventListener('click', async () => {
+            if (!window.escposPrinter.isConnected) {
+                alert("Harap hubungkan printer terlebih dahulu!");
+                return;
+            }
+            
+            try {
+                btnTest.disabled = true;
+                btnTest.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Mencetak...`;
+                if(typeof lucide !== 'undefined') lucide.createIcons();
+
+                await window.escposPrinter.printReceipt({
+                    school_name: "<%= settings.school_name || 'MI AL-BIDAYAH' %>",
+                    is_return: false,
+                    transaction_id: "TEST-123",
+                    student_name: "Uji Coba Printer",
+                    student_nisn: "0000000000",
+                    book_title: "Test Cetak Struk Web Bluetooth",
+                    borrow_date: new Date().toLocaleDateString('id-ID'),
+                    expected_return_date: new Date().toLocaleDateString('id-ID'),
+                    return_date: null,
+                    fine: 0
+                });
+                alert('Test print berhasil dikirim ke printer!');
+            } catch (err) {
+                alert('Gagal mencetak: ' + err.message);
+            } finally {
+                btnTest.disabled = false;
+                btnTest.innerHTML = `<i data-lucide="file-check-2" class="w-4 h-4"></i> Test Print`;
+                if(typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        });
+    });
+</script>
+
 <%- include('partials/footer') %>

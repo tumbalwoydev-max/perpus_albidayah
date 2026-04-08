@@ -86,7 +86,8 @@
     <div class="receipt-container">
         
         <div class="no-print">
-            <button class="btn-print" onclick="window.print()">Cetak Thermal (58mm)</button>
+            <button class="btn-print" id="btn-print-bluetooth" style="background-color: #0284c7; margin-bottom: 8px;">Cetak Otomatis (Bluetooth)</button>
+            <button class="btn-print" onclick="window.print()">Cetak Standard (Browser Dialog)</button>
             <a href="/transactions" class="btn-back mb-3">Kembali ke Dashboard</a>
         </div>
 
@@ -157,10 +158,89 @@
 
     </div>
 
-    <!-- Auto-print behavior -->
+    <!-- Script Printer Bluetooth API -->
+    <script src="/js/printer.js"></script>
+
+    <!-- Print Logic -->
     <script>
-        // Use timeout to ensure styles hit the dom before auto print
-        window.addEventListener('load', () => { setTimeout(() => { window.print(); }, 500) });
+        const btnBluetooth = document.getElementById('btn-print-bluetooth');
+
+        // Pengecekan status bluetooth device dan trigger
+        const doBluetoothPrint = async () => {
+            try {
+                btnBluetooth.disabled = true;
+                btnBluetooth.innerHTML = "Menghubungkan...";
+                
+                // Cari koneksi yang ada atau coba auto-reconnect
+                if (!window.escposPrinter.isConnected) {
+                    const reconnected = await window.escposPrinter.autoConnect();
+                    if (!reconnected) {
+                        // Jika autoConnect gagal, pancing dengan dialog manual
+                        const success = await window.escposPrinter.connect();
+                        if (!success) {
+                            btnBluetooth.disabled = false;
+                            btnBluetooth.innerHTML = "Cetak Otomatis (Bluetooth)";
+                            return;
+                        }
+                    }
+                }
+
+                btnBluetooth.innerHTML = "Sedang Mencetak...";
+                
+                await window.escposPrinter.printReceipt({
+                    school_name: "<%= school_name %>",
+                    is_return: <%= !!transaction.return_date %>,
+                    transaction_id: "<%= transaction.id %>",
+                    student_name: "<%= transaction.Student.name %>",
+                    student_nisn: "<%= transaction.Student.nisn %>",
+                    book_title: "<%= transaction.Book.title %>",
+                    borrow_date: "<%= transaction.borrow_date %>",
+                    expected_return_date: "<%= transaction.expected_return_date %>",
+                    return_date: "<%= transaction.return_date || '' %>",
+                    fine: <%= transaction.fine || 0 %>
+                });
+
+                btnBluetooth.innerHTML = "Cetak Selesai!";
+                btnBluetooth.style.backgroundColor = "#059669";
+                
+                setTimeout(() => {
+                    btnBluetooth.disabled = false;
+                    btnBluetooth.innerHTML = "Cetak Otomatis (Bluetooth)";
+                    btnBluetooth.style.backgroundColor = "#0284c7";
+                }, 3000);
+
+            } catch (error) {
+                console.error('Bluetooth Print Error:', error);
+                alert("Gagal mencetak: " + error.message);
+                btnBluetooth.disabled = false;
+                btnBluetooth.innerHTML = "Cetak Otomatis (Bluetooth)";
+            }
+        };
+
+        btnBluetooth.addEventListener('click', doBluetoothPrint);
+
+        // Auto print attempt
+        window.addEventListener('load', async () => { 
+            const savedName = localStorage.getItem('bluetooth_printer_name');
+            if (savedName) {
+                // Tampilkan info sedang mencoba menyambung
+                btnBluetooth.innerHTML = "Menyambung ke " + savedName + "...";
+                
+                // Coba autoConnect (tanpa dialog)
+                const success = await window.escposPrinter.autoConnect();
+                if (success) {
+                    doBluetoothPrint(); 
+                } else {
+                    btnBluetooth.innerHTML = "Klik untuk Cetak & Hubungkan";
+                    btnBluetooth.style.backgroundColor = "#fbbf24"; // Amber
+                    btnBluetooth.style.color = "#000";
+                }
+            } else {
+                // Fallback jika tidak ada printer terdaftar
+                btnBluetooth.innerHTML = "Hubungkan Printer di Pengaturan";
+                btnBluetooth.style.opacity = "0.5";
+            }
+        });
     </script>
 </body>
 </html>
