@@ -189,6 +189,7 @@
                 
                 await window.escposPrinter.printReceipt({
                     school_name: "<%= school_name %>",
+                    logo_url: "/images/logo.png", // Tambahan logo
                     is_return: <%= !!transaction.return_date %>,
                     transaction_id: "<%= transaction.id %>",
                     student_name: "<%= transaction.Student.name %>",
