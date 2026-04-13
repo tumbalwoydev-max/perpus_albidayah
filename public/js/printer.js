@@ -177,6 +177,7 @@ class ESCPOSPrinter {
             textData += SIZE_BIG + BOLD_ON + "PERPUSTAKAAN" + BOLD_OFF + "\n";
             textData += SIZE_BIG + BOLD_ON + receiptData.school_name + BOLD_OFF + "\n";
             textData += SIZE_NORMAL; // Kembali ke ukuran normal
+            textData += "\n"; // Tambahan jarak
             textData += "SISTEM PERPUSTAKAAN\n";
             textData += "================================" + "\n";
             textData += BOLD_ON + (receiptData.is_return ? "BUKTI PENGEMBALIAN" : "BUKTI PEMINJAMAN") + BOLD_OFF + "\n\n";
