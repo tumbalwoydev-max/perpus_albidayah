@@ -172,13 +172,13 @@ class ESCPOSPrinter {
             if (receiptData.logo_url) {
                 console.log('Memproses logo:', receiptData.logo_url);
                 try {
-                    // Menggunakan 256px (lebar aman 32 bytes) untuk menghindari stretching
-                    // Reset spasi baris ke default (ESC 2) sebelum mencetak bitmap
+                    // Menggunakan 320px (lebar optimal 40 bytes)
+                    // Tetap meriset spasi baris ke default (ESC 2) supaya tidak gepeng
                     const ESC = "\x1B";
                     const RESET_SPACING = ESC + "2";
                     allData = concat(allData, encoder.encode(RESET_SPACING));
                     
-                    const logoData = await this.getImagePrintData(receiptData.logo_url, 256); 
+                    const logoData = await this.getImagePrintData(receiptData.logo_url, 320); 
                     allData = concat(allData, encoder.encode(ALIGN_CENTER));
                     allData = concat(allData, logoData);
                     allData = concat(allData, encoder.encode("\n\n")); // Ekstra space setelah logo
