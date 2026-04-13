@@ -172,9 +172,9 @@ class ESCPOSPrinter {
             if (receiptData.logo_url) {
                 console.log('Memproses logo:', receiptData.logo_url);
                 try {
-                    // Diperbesar agar lebih jelas (320px lebar standar printer 58mm / 40 bytes)
-                    // Digunakan 320 agar pas dengan kelipatan 8 dots (byte aligned)
-                    const logoData = await this.getImagePrintData(receiptData.logo_url, 320); 
+                    // Menggunakan 384px (lebar native printer 58mm / 48 bytes)
+                    // Ukuran ini memastikan printer tidak melakukan scaling paksa yang bikin gepeng
+                    const logoData = await this.getImagePrintData(receiptData.logo_url, 384); 
                     allData = concat(allData, encoder.encode(ALIGN_CENTER));
                     allData = concat(allData, logoData);
                     allData = concat(allData, encoder.encode("\n\n")); // Ekstra space setelah logo
@@ -248,10 +248,9 @@ class ESCPOSPrinter {
                 const ctx = canvas.getContext('2d');
                 
                 // Hitung aspek rasio agar tidak penyet
-                // Ambil kelipatan 8 dots terdekat agar byte-aligned tanpa stretching
+                // Menggunakan realWidth sebagai basis skala utama
                 const realWidth = Math.ceil(maxWidth / 8) * 8;
                 const scale = realWidth / img.width;
-                const width = realWidth;
                 const height = Math.round(img.height * scale);
                 
                 canvas.width = realWidth;
