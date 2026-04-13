@@ -168,15 +168,12 @@ class ESCPOSPrinter {
             // 1. Initialize
             allData = concat(allData, encoder.encode(INIT));
 
-            // 2. Watermark & Header Eksklusif (Gaya Struk Bank BRI)
+            // 2. Header Eksklusif (Gaya Struk Bank BRI)
             let textData = "";
             const SIZE_BIG = GS + "!" + "\x11"; // Double width & double height
             const SIZE_NORMAL = GS + "!" + "\x00"; // Reset sizing
             
             textData += ALIGN_CENTER;
-            // Watermark atas
-            textData += BOLD_ON + "MI AL-BIDAYAH MI AL-BIDAYAH MI AL-BIDAYAH\n" + BOLD_OFF;
-            textData += "--------------------------------\n\n";
             textData += SIZE_BIG + BOLD_ON + "PERPUSTAKAAN" + BOLD_OFF + "\n";
             textData += SIZE_BIG + BOLD_ON + receiptData.school_name + BOLD_OFF + "\n";
             textData += SIZE_NORMAL; // Kembali ke ukuran normal
@@ -212,10 +209,9 @@ class ESCPOSPrinter {
             textData += "Harap kembalikan buku tepat\n";
             textData += "waktu agar terhindar denda\n\n";
             
-            // Watermark Bawah
-            textData += "--------------------------------\n";
-            textData += BOLD_ON + "MI AL-BIDAYAH MI AL-BIDAYAH MI AL-BIDAYAH\n" + BOLD_OFF;
-            textData += "\n\n\n";
+            // Kolom Tanda Tangan
+            textData += "................................\n";
+            textData += "Petugas Perpustakaan\n\n\n\n";
             
             allData = concat(allData, encoder.encode(textData));
 
