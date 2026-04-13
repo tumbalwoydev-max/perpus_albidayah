@@ -172,8 +172,9 @@ class ESCPOSPrinter {
             if (receiptData.logo_url) {
                 console.log('Memproses logo:', receiptData.logo_url);
                 try {
-                    // Diperbesar agar lebih jelas (350px lebar standar printer 58mm)
-                    const logoData = await this.getImagePrintData(receiptData.logo_url, 350); 
+                    // Diperbesar agar lebih jelas (320px lebar standar printer 58mm / 40 bytes)
+                    // Digunakan 320 agar pas dengan kelipatan 8 dots (byte aligned)
+                    const logoData = await this.getImagePrintData(receiptData.logo_url, 320); 
                     allData = concat(allData, encoder.encode(ALIGN_CENTER));
                     allData = concat(allData, logoData);
                     allData = concat(allData, encoder.encode("\n\n")); // Ekstra space setelah logo
@@ -247,12 +248,11 @@ class ESCPOSPrinter {
                 const ctx = canvas.getContext('2d');
                 
                 // Hitung aspek rasio agar tidak penyet
-                const scale = maxWidth / img.width;
-                const width = maxWidth;
-                const height = Math.floor(img.height * scale);
-                
-                // Width harus kelipatan 8 dots (1 byte per 8 dots)
-                const realWidth = Math.ceil(width / 8) * 8;
+                // Ambil kelipatan 8 dots terdekat agar byte-aligned tanpa stretching
+                const realWidth = Math.ceil(maxWidth / 8) * 8;
+                const scale = realWidth / img.width;
+                const width = realWidth;
+                const height = Math.round(img.height * scale);
                 
                 canvas.width = realWidth;
                 canvas.height = height;
@@ -260,7 +260,7 @@ class ESCPOSPrinter {
                 // Putih sebagai background
                 ctx.fillStyle = "#fff";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(img, 0, 0, width, height);
+                ctx.drawImage(img, 0, 0, realWidth, height);
                 
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const pixels = imageData.data;
