@@ -172,10 +172,11 @@ class ESCPOSPrinter {
             if (receiptData.logo_url) {
                 console.log('Memproses logo:', receiptData.logo_url);
                 try {
-                    const logoData = await this.getImagePrintData(receiptData.logo_url, 180); // Max width 180px agar pas
+                    // Diperbesar agar lebih jelas (350px lebar standar printer 58mm)
+                    const logoData = await this.getImagePrintData(receiptData.logo_url, 350); 
                     allData = concat(allData, encoder.encode(ALIGN_CENTER));
                     allData = concat(allData, logoData);
-                    allData = concat(allData, encoder.encode("\n"));
+                    allData = concat(allData, encoder.encode("\n\n")); // Ekstra space setelah logo
                 } catch (err) {
                     console.error('Gagal memproses logo, lanjut cetak teks saja:', err);
                 }
@@ -186,8 +187,8 @@ class ESCPOSPrinter {
             textData += ALIGN_CENTER;
             textData += BOLD_ON + receiptData.school_name + BOLD_OFF + "\n";
             textData += "SISTEM PERPUSTAKAAN\n";
-            textData += "--------------------------------\n";
-            textData += (receiptData.is_return ? "BUKTI PENGEMBALIAN" : "BUKTI PEMINJAMAN") + "\n\n";
+            textData += "================================\n"; // Double separator
+            textData += BOLD_ON + (receiptData.is_return ? "BUKTI PENGEMBALIAN" : "BUKTI PEMINJAMAN") + BOLD_OFF + "\n\n";
             
             textData += ALIGN_LEFT;
             textData += "No Resi : TRX-" + receiptData.transaction_id + "\n";
@@ -213,7 +214,7 @@ class ESCPOSPrinter {
             
             textData += "--------------------------------\n";
             textData += ALIGN_CENTER;
-            textData += "Terima Kasih!\n";
+            textData += "\nTerima Kasih!\n";
             textData += "Harap kembalikan buku tepat\n";
             textData += "waktu agar terhindar denda\n\n\n\n";
             
