@@ -168,31 +168,17 @@ class ESCPOSPrinter {
             // 1. Initialize
             allData = concat(allData, encoder.encode(INIT));
 
-            // 2. Logo (jika ada)
-            if (receiptData.logo_url) {
-                console.log('Memproses logo:', receiptData.logo_url);
-                try {
-                    // Menggunakan 320px (lebar optimal 40 bytes)
-                    // Tetap meriset spasi baris ke default (ESC 2) supaya tidak gepeng
-                    const ESC = "\x1B";
-                    const RESET_SPACING = ESC + "2";
-                    allData = concat(allData, encoder.encode(RESET_SPACING));
-                    
-                    const logoData = await this.getImagePrintData(receiptData.logo_url, 320); 
-                    allData = concat(allData, encoder.encode(ALIGN_CENTER));
-                    allData = concat(allData, logoData);
-                    allData = concat(allData, encoder.encode("\n\n")); // Ekstra space setelah logo
-                } catch (err) {
-                    console.error('Gagal memproses logo, lanjut cetak teks saja:', err);
-                }
-            }
-            
-            // 3. Header & Content
+            // 2. Header Eksklusif (Gaya Struk Bank BRI)
             let textData = "";
+            const SIZE_BIG = GS + "!" + "\x11"; // Double width & double height
+            const SIZE_NORMAL = GS + "!" + "\x00"; // Reset sizing
+            
             textData += ALIGN_CENTER;
-            textData += BOLD_ON + receiptData.school_name + BOLD_OFF + "\n";
+            textData += SIZE_BIG + BOLD_ON + "PERPUSTAKAAN" + BOLD_OFF + "\n";
+            textData += SIZE_BIG + BOLD_ON + receiptData.school_name + BOLD_OFF + "\n";
+            textData += SIZE_NORMAL; // Kembali ke ukuran normal
             textData += "SISTEM PERPUSTAKAAN\n";
-            textData += "================================\n"; // Double separator
+            textData += "================================" + "\n";
             textData += BOLD_ON + (receiptData.is_return ? "BUKTI PENGEMBALIAN" : "BUKTI PEMINJAMAN") + BOLD_OFF + "\n\n";
             
             textData += ALIGN_LEFT;
