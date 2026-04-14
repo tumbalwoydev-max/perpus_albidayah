@@ -80,28 +80,44 @@ router.get('/create', checkAuth, async (req, res) => {
 // POST: Process borrowing
 router.post('/create', checkAuth, async (req, res) => {
     try {
-        const { student_id, book_id, borrow_date, expected_return_date } = req.body;
+        let { student_id, book_id, borrow_date, expected_return_date } = req.body;
         
-        // Ensure book is still available
-        const book = await Book.findByPk(book_id);
-        if (!book || book.stock <= 0) {
-            return res.status(400).send('Buku tidak tersedia.');
+        // Handle multiple book IDs if provided (as array)
+        const bookIds = Array.isArray(book_id) ? book_id : [book_id];
+        
+        if (bookIds.length === 0) {
+            return res.status(400).send('Harap pilih minimal satu buku.');
         }
 
-        // Create Transaction
-        const transaction = await Transaction.create({
-            student_id,
-            book_id,
-            borrow_date,
-            expected_return_date
-        });
+        const batchId = `BATCH-${Date.now()}`;
+        const createdTransactions = [];
 
-        // Decrease stock
-        book.stock -= 1;
-        await book.save();
+        for (const id of bookIds) {
+            const book = await Book.findByPk(id);
+            if (!book || book.stock <= 0) {
+                continue; // Skip if unavailable or not found
+            }
 
-        // Redirect to receipt
-        res.redirect(`/transactions/receipt/${transaction.id}`);
+            const transaction = await Transaction.create({
+                student_id,
+                book_id: id,
+                borrow_date,
+                expected_return_date,
+                batch_id: batchId
+            });
+
+            book.stock -= 1;
+            await book.save();
+            createdTransactions.push(transaction);
+        }
+
+        if (createdTransactions.length === 0) {
+            return res.status(400).send('Gagal memproses peminjaman. Stok mungkin habis.');
+        }
+
+        // Redirect to receipt of the first transaction, 
+        // which will now fetch its siblings via batch_id
+        res.redirect(`/transactions/receipt/${createdTransactions[0].id}`);
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
@@ -111,15 +127,29 @@ router.post('/create', checkAuth, async (req, res) => {
 // GET: Receipt Print View
 router.get('/receipt/:id', checkAuth, async (req, res) => {
     try {
-        const transaction = await Transaction.findByPk(req.params.id, {
-            include: [Student, Book]
-        });
+        const singleTransaction = await Transaction.findByPk(req.params.id);
+        if (!singleTransaction) return res.redirect('/transactions');
 
-        if (!transaction) return res.redirect('/transactions');
+        let transactions = [];
+        if (singleTransaction.batch_id) {
+            // Fetch all transactions in the same batch
+            transactions = await Transaction.findAll({
+                where: { batch_id: singleTransaction.batch_id },
+                include: [Student, Book]
+            });
+        } else {
+            // Fallback for old transactions without batch_id
+            const fullTransaction = await Transaction.findByPk(req.params.id, {
+                include: [Student, Book]
+            });
+            transactions = [fullTransaction];
+        }
 
         res.render('transactions/receipt', { 
             title: 'Cetak Struk', 
-            transaction, layout: false // Usually receipt doesn't need standard layout, but let's see
+            transactions,
+            transaction: transactions[0], // For legacy compatibility in some parts of view
+            layout: false
         });
     } catch (err) {
         console.error(err);

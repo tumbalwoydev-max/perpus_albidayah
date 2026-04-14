@@ -118,10 +118,20 @@
             <span class="value"><%= transaction.Student.nisn %></span>
         </div>
 
-        <div class="line"></div>
-
-        <p class="font-bold text-center text-sm mb-1" style="background: #f3f4f6; padding: 2px 0;">DATA BUKU</p>
-        <p class="text-sm mb-2 text-center" style="word-break: break-word; padding: 5px 0;"><%= transaction.Book.title %></p>
+        <% if (transactions.length > 1) { %>
+            <p class="font-bold text-center text-sm mb-1" style="background: #f3f4f6; padding: 2px 0;">DAFTAR BUKU PINJAMAN</p>
+            <div class="text-sm mb-2" style="padding: 5px 0;">
+                <% transactions.forEach((tx, index) => { %>
+                    <div style="margin-bottom: 4px; display: flex; gap: 5px;">
+                        <span><%= index + 1 %>.</span>
+                        <span style="word-break: break-word;"><%= tx.Book.title %></span>
+                    </div>
+                <% }); %>
+            </div>
+        <% } else { %>
+            <p class="font-bold text-center text-sm mb-1" style="background: #f3f4f6; padding: 2px 0;">DATA BUKU</p>
+            <p class="text-sm mb-2 text-center" style="word-break: break-word; padding: 5px 0;"><%= transaction.Book.title %></p>
+        <% } %>
 
         <div class="row text-sm">
             <span class="label">Tgl Pinjam:</span>
@@ -189,19 +199,26 @@
 
                 btnBluetooth.innerHTML = "Sedang Mencetak...";
                 
-                await window.escposPrinter.printReceipt({
+                const printerData = {
                     school_name: "<%= school_name %>",
-                    logo_url: "/images/logo.png", // Tambahan logo
+                    logo_url: "/images/logo.png",
                     is_return: <%= !!transaction.return_date %>,
-                    transaction_id: "<%= transaction.id %>",
+                    transaction_id: "<%= transaction.batch_id || transaction.id %>",
                     student_name: "<%= transaction.Student.name %>",
                     student_nisn: "<%= transaction.Student.nisn %>",
-                    book_title: "<%= transaction.Book.title %>",
                     borrow_date: "<%= transaction.borrow_date %>",
                     expected_return_date: "<%= transaction.expected_return_date %>",
                     return_date: "<%= transaction.return_date || '' %>",
-                    fine: <%= transaction.fine || 0 %>
-                });
+                    fine: <%= transaction.fine || 0 %>,
+                    // Send list of books
+                    books: [
+                        <% transactions.forEach(tx => { %>
+                            { title: "<%= tx.Book.title %>" },
+                        <% }); %>
+                    ]
+                };
+
+                await window.escposPrinter.printReceipt(printerData);
 
                 btnBluetooth.innerHTML = "Cetak Selesai!";
                 btnBluetooth.style.backgroundColor = "#059669";

@@ -190,7 +190,15 @@ class ESCPOSPrinter {
             
             textData += ALIGN_CENTER;
             textData += BOLD_ON + "DATA BUKU\n" + BOLD_OFF;
-            textData += receiptData.book_title + "\n\n";
+            
+            if (Array.isArray(receiptData.books)) {
+                receiptData.books.forEach((book, index) => {
+                    textData += `${index + 1}. ${book.title}\n`;
+                });
+            } else {
+                textData += receiptData.book_title + "\n";
+            }
+            textData += "\n";
             
             textData += ALIGN_LEFT;
             textData += "Tgl Pinjam    : " + receiptData.borrow_date + "\n";

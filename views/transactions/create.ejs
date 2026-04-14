@@ -37,23 +37,40 @@
             
             <input type="hidden" name="student_id" value="<%= student.id %>">
 
-            <div>
-                <label for="book_id" class="block text-sm font-medium text-gray-700 mb-1">Pilih Buku Inventaris</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i data-lucide="book" class="w-5 h-5 text-gray-400"></i>
+            <!-- Pengelola Daftar Buku -->
+            <div class="bg-emerald-50 rounded-xl p-5 border border-emerald-100">
+                <label class="block text-sm font-bold text-emerald-800 mb-3 flex items-center gap-2">
+                    <i data-lucide="book-plus" class="w-5 h-5"></i> Daftar Buku yang Dipinjam
+                </label>
+                
+                <div class="flex gap-2 mb-4">
+                    <div class="relative flex-grow">
+                        <select id="book-select" class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm py-2 px-3 border bg-white">
+                            <option value="" disabled selected>Pilih judul buku...</option>
+                            <% books.forEach(book => { %>
+                                <option value="<%= book.id %>" data-title="<%= book.title %>" data-stock="<%= book.stock %>">
+                                    <%= book.title %> (Stok: <%= book.stock %>)
+                                </option>
+                            <% }); %>
+                        </select>
                     </div>
-                    <select name="book_id" id="book_id" required
-                        class="pl-10 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm py-2 px-3 border bg-white">
-                        <option value="" disabled selected>Cari dan pilih judul buku...</option>
-                        <% books.forEach(book => { %>
-                            <option value="<%= book.id %>"><%= book.title %> (Stok: <%= book.stock %>) - <%= book.author %></option>
-                        <% }); %>
-                    </select>
+                    <button type="button" id="add-book-btn" class="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition flex items-center gap-1 shrink-0">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Tambah
+                    </button>
                 </div>
+
+                <div id="selected-books-list" class="space-y-2">
+                    <!-- List items will follow here -->
+                    <div id="empty-state" class="text-center py-4 text-emerald-600/50 text-sm italic">
+                        Belum ada buku terpilih.
+                    </div>
+                </div>
+
+                <!-- Container for hidden inputs -->
+                <div id="hidden-inputs"></div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
                 <div>
                     <label for="borrow_date" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Pinjam</label>
                     <div class="relative">
@@ -83,7 +100,7 @@
                 <a href="/transactions" class="inline-flex justify-center items-center py-2 px-4 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors">
                     Nanti / Batal
                 </a>
-                <button type="submit" class="inline-flex justify-center items-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 transition-colors gap-2">
+                <button type="submit" id="submit-btn" disabled class="inline-flex justify-center items-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-gray-400 cursor-not-allowed transition-colors gap-2">
                     <i data-lucide="check-circle" class="w-4 h-4"></i> Validasi & Cetak Struk
                 </button>
             </div>
@@ -91,5 +108,80 @@
         </form>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const bookSelect = document.getElementById('book-select');
+        const addBookBtn = document.getElementById('add-book-btn');
+        const listContainer = document.getElementById('selected-books-list');
+        const hiddenContainer = document.getElementById('hidden-inputs');
+        const emptyState = document.getElementById('empty-state');
+        const submitBtn = document.getElementById('submit-btn');
+
+        let selectedBooks = [];
+
+        const updateUI = () => {
+            listContainer.innerHTML = '';
+            hiddenContainer.innerHTML = '';
+            
+            if (selectedBooks.length === 0) {
+                listContainer.appendChild(emptyState);
+                submitBtn.disabled = true;
+                submitBtn.classList.replace('bg-emerald-600', 'bg-gray-400');
+                submitBtn.classList.add('cursor-not-allowed');
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.classList.replace('bg-gray-400', 'bg-emerald-600');
+                submitBtn.classList.remove('cursor-not-allowed');
+                
+                selectedBooks.forEach((book, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'flex items-center justify-between bg-white p-3 rounded-lg border border-emerald-200 shadow-sm animate-in fade-in slide-in-from-left-2';
+                    item.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <span class="w-6 h-6 bg-emerald-100 text-emerald-700 flex items-center justify-center rounded-full text-xs font-bold">${index + 1}</span>
+                            <span class="text-sm font-medium text-gray-800">${book.title}</span>
+                        </div>
+                        <button type="button" onclick="removeBook(${book.id})" class="text-red-500 hover:text-red-700 p-1">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    `;
+                    listContainer.appendChild(item);
+
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = 'book_id[]';
+                    hidden.value = book.id;
+                    hiddenContainer.appendChild(hidden);
+                });
+            }
+            if(window.lucide) window.lucide.createIcons();
+        };
+
+        addBookBtn.addEventListener('click', () => {
+            const bookId = bookSelect.value;
+            if (!bookId) return;
+
+            if (selectedBooks.some(b => b.id === bookId)) {
+                alert('Buku ini sudah masuk daftar.');
+                return;
+            }
+
+            const option = bookSelect.options[bookSelect.selectedIndex];
+            selectedBooks.push({
+                id: bookId,
+                title: option.dataset.title
+            });
+
+            bookSelect.selectedIndex = 0;
+            updateUI();
+        });
+
+        window.removeBook = (id) => {
+            selectedBooks = selectedBooks.filter(b => b.id != id);
+            updateUI();
+        };
+    });
+</script>
 
 <%- include('../partials/footer') %>

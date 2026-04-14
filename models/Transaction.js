@@ -20,6 +20,10 @@ const Transaction = sequelize.define('Transaction', {
     type: DataTypes.INTEGER,
     allowNull: true,
     defaultValue: 0
+  },
+  batch_id: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 });
 
