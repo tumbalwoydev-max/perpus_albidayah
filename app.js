@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
@@ -27,9 +28,9 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   proxy: true, // Required for secure cookie behind Vercel proxy
-  cookie: { 
+  cookie: {
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 
+    maxAge: 24 * 60 * 60 * 1000
   }
 }));
 
@@ -58,7 +59,7 @@ const initDatabase = async () => {
   try {
     await sequelize.authenticate();
     await sequelize.sync({ alter: true });
-    
+
     const adminCount = await Admin.count();
     if (adminCount === 0) {
       const hashedPassword = await bcrypt.hash('admin123', 10);

@@ -24,7 +24,12 @@ const checkAuth = (req, res, next) => {
 // GET: List all students
 router.get('/', checkAuth, async (req, res) => {
     try {
-        const students = await Student.findAll();
+        const students = await Student.findAll({
+            order: [
+                ['class', 'ASC'],
+                ['name', 'ASC']
+            ]
+        });
         res.render('students/index', { title: 'Master Data Siswa', students });
     } catch (err) {
         console.error(err);
