@@ -34,20 +34,33 @@ app.use(session({
   }
 }));
 
-// Sync session store
-sessionStore.sync();
+// Sync session store (Hanya buat tabel jika tidak ada, di-await di initDatabase untuk amannya)
 
 // Setup EJS
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Global variables for views
+// Global variables for views with Memory Caching
+let cachedSchoolName = null;
+let lastCacheTime = null;
+const CACHE_TTL = 10 * 60 * 1000; // 10 menit
+
 app.use(async (req, res, next) => {
   res.locals.user = req.session.admin || null;
   res.locals.school_name = 'MI AL-BIDAYAH'; // Default value
+  
   try {
-    const schoolNameSetting = await Setting.findOne({ where: { key: 'school_name' } });
-    if (schoolNameSetting) res.locals.school_name = schoolNameSetting.value;
+    const now = Date.now();
+    if (cachedSchoolName && lastCacheTime && (now - lastCacheTime < CACHE_TTL)) {
+        res.locals.school_name = cachedSchoolName;
+    } else {
+        const schoolNameSetting = await Setting.findOne({ where: { key: 'school_name' } });
+        if (schoolNameSetting) {
+            res.locals.school_name = schoolNameSetting.value;
+            cachedSchoolName = schoolNameSetting.value;
+            lastCacheTime = now;
+        }
+    }
   } catch (e) {
     console.log('Setting fetch skipped');
   }
@@ -58,7 +71,16 @@ app.use(async (req, res, next) => {
 const initDatabase = async () => {
   try {
     await sequelize.authenticate();
-    await sequelize.sync({ alter: true });
+    
+    // Optimasi Vercel: Matikan alter di production agar boot lebih cepat.
+    if (process.env.NODE_ENV !== 'production') {
+      await sequelize.sync({ alter: true });
+      await sessionStore.sync(); // Sync session table
+    } else {
+      // Di production, cuma sync ringan, tidak force atau alter
+      await sequelize.sync(); 
+      await sessionStore.sync(); 
+    }
 
     const adminCount = await Admin.count();
     if (adminCount === 0) {
