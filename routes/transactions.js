@@ -83,7 +83,7 @@ router.post('/create', checkAuth, async (req, res) => {
         let { student_id, book_id, borrow_date, expected_return_date } = req.body;
         
         // Handle multiple book IDs if provided (as array)
-        const bookIds = Array.isArray(book_id) ? book_id : [book_id];
+        const bookIds = Array.isArray(book_id) ? book_id : (book_id ? [book_id] : []);
         
         if (bookIds.length === 0) {
             return res.status(400).send('Harap pilih minimal satu buku.');
@@ -119,8 +119,8 @@ router.post('/create', checkAuth, async (req, res) => {
         // which will now fetch its siblings via batch_id
         res.redirect(`/transactions/receipt/${createdTransactions[0].id}`);
     } catch (err) {
-        console.error(err);
-        res.status(500).send('Server Error');
+        console.error('Borrow Error:', err);
+        res.status(500).send('Server Error: ' + err.message);
     }
 });
 
@@ -211,8 +211,8 @@ router.post('/return/:id', checkAuth, async (req, res) => {
 
         res.redirect('/transactions');
     } catch (err) {
-        console.error(err);
-        res.status(500).send('Server Error');
+        console.error('Return Error:', err);
+        res.status(500).send('Server Error: ' + err.message);
     }
 });
 

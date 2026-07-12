@@ -24,16 +24,33 @@ const checkAuth = (req, res, next) => {
 // GET: List all students
 router.get('/', checkAuth, async (req, res) => {
     try {
+        const filterClass = req.query.class;
+        const whereClause = filterClass ? { class: filterClass } : {};
+        
         const students = await Student.findAll({
+            where: whereClause,
             order: [
                 ['class', 'ASC'],
                 ['name', 'ASC']
             ]
         });
-        res.render('students/index', { title: 'Master Data Siswa', students });
+        
+        // Get unique classes for the filter dropdown
+        const allClasses = await Student.findAll({
+            attributes: ['class'],
+            group: ['class'],
+            order: [['class', 'ASC']]
+        });
+        
+        res.render('students/index', { 
+            title: 'Master Data Siswa', 
+            students,
+            filterClass: filterClass || '',
+            classes: allClasses.map(c => c.class)
+        });
     } catch (err) {
         console.error(err);
-        res.status(500).send('Server Error');
+        res.status(500).send('Server Error: ' + err.message);
     }
 });
 
@@ -152,6 +169,20 @@ router.post('/delete/:id', checkAuth, async (req, res) => {
         res.redirect('/admin/students');
     } catch (err) {
         console.error('Student Delete Error:', err);
+        res.redirect('/admin/students');
+    }
+});
+
+// POST: Delete student by class
+router.post('/delete-class', checkAuth, async (req, res) => {
+    try {
+        const className = req.body.class_name;
+        if (className) {
+            await Student.destroy({ where: { class: className } });
+        }
+        res.redirect('/admin/students');
+    } catch (err) {
+        console.error('Student Bulk Delete Error:', err);
         res.redirect('/admin/students');
     }
 });

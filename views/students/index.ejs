@@ -5,10 +5,53 @@
         <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Data Master Siswa</h1>
         <p class="text-sm text-gray-500 mt-1">Kelola data seluruh siswa beserta QR Code kepemilikan.</p>
     </div>
-    <a href="/admin/students/create" class="inline-flex items-center justify-center py-2.5 px-4 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 transition gap-2">
-        <i data-lucide="plus" class="w-4 h-4"></i> Tambah Siswa
-    </a>
+    
+    <div class="flex flex-col sm:flex-row gap-3 items-center w-full sm:w-auto">
+        <!-- Class Filter -->
+        <form action="/admin/students" method="GET" class="w-full sm:w-auto flex items-center">
+            <select name="class" onchange="this.form.submit()" class="block w-full sm:w-48 pl-3 pr-10 py-2.5 text-base border-gray-300 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-lg border bg-white shadow-sm">
+                <option value="">Semua Kelas</option>
+                <% classes.forEach(c => { %>
+                    <option value="<%= c %>" <%= filterClass === c ? 'selected' : '' %>>Kelas <%= c %></option>
+                <% }) %>
+            </select>
+        </form>
+
+        <div class="flex gap-2 w-full sm:w-auto justify-end">
+            <!-- Delete By Class Button -->
+            <button type="button" onclick="promptDeleteClass()" class="inline-flex items-center justify-center py-2.5 px-4 border border-red-200 shadow-sm text-sm font-medium rounded-lg text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700 transition focus:outline-none focus:ring-2 focus:ring-red-500 gap-2">
+                <i data-lucide="trash-2" class="w-4 h-4"></i> Hapus Kelas
+            </button>
+            <a href="/admin/students/create" class="inline-flex items-center justify-center py-2.5 px-4 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 transition gap-2 whitespace-nowrap">
+                <i data-lucide="plus" class="w-4 h-4"></i> Tambah
+            </a>
+        </div>
+    </div>
 </div>
+
+<script>
+function promptDeleteClass() {
+    const classToDelete = prompt("HATI-HATI! Fitur ini akan menghapus semua siswa di kelas yang Anda pilih beserta histori peminjamannya.\n\nKetik nama kelas yang ingin dihapus (contoh: 6A, 6B, dll):");
+    
+    if (classToDelete && classToDelete.trim() !== '') {
+        const confirmDelete = confirm(`Apakah Anda SANGAT YAKIN ingin MENGHAPUS SEMUA DATA SISWA KELAS ${classToDelete.toUpperCase()}? Data yang dihapus tidak bisa dikembalikan.`);
+        if (confirmDelete) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/admin/students/delete-class';
+            
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'class_name';
+            input.value = classToDelete.trim().toUpperCase(); // Assuming classes are stored uppercase
+            
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+}
+</script>
 
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
     <div class="overflow-x-auto">
