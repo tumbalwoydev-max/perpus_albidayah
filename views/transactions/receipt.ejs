@@ -111,11 +111,11 @@
         </div>
         <div class="row text-sm">
             <span class="label">Siswa:</span>
-            <span class="value"><%= transaction.Student.name %></span>
+            <span class="value"><%= transaction.Student ? transaction.Student.name : 'Siswa Dihapus' %></span>
         </div>
         <div class="row text-sm">
             <span class="label">NISN:</span>
-            <span class="value"><%= transaction.Student.nisn %></span>
+            <span class="value"><%= transaction.Student ? transaction.Student.nisn : '-' %></span>
         </div>
 
         <% if (transactions.length > 1) { %>
@@ -124,13 +124,13 @@
                 <% transactions.forEach((tx, index) => { %>
                     <div style="margin-bottom: 4px; display: flex; gap: 5px;">
                         <span><%= index + 1 %>.</span>
-                        <span style="word-break: break-word;"><%= tx.Book.title %></span>
+                        <span style="word-break: break-word;"><%= tx.Book ? tx.Book.title : 'Buku Dihapus' %></span>
                     </div>
                 <% }); %>
             </div>
         <% } else { %>
             <p class="font-bold text-center text-sm mb-1" style="background: #f3f4f6; padding: 2px 0;">DATA BUKU</p>
-            <p class="text-sm mb-2 text-center" style="word-break: break-word; padding: 5px 0;"><%= transaction.Book.title %></p>
+            <p class="text-sm mb-2 text-center" style="word-break: break-word; padding: 5px 0;"><%= transaction.Book ? transaction.Book.title : 'Buku Dihapus' %></p>
         <% } %>
 
         <div class="row text-sm">
@@ -204,8 +204,8 @@
                     logo_url: "/images/logo.png",
                     is_return: <%= !!transaction.return_date %>,
                     transaction_id: "<%= transaction.batch_id || transaction.id %>",
-                    student_name: "<%= transaction.Student.name %>",
-                    student_nisn: "<%= transaction.Student.nisn %>",
+                    student_name: "<%= transaction.Student ? transaction.Student.name : 'Siswa Dihapus' %>",
+                    student_nisn: "<%= transaction.Student ? transaction.Student.nisn : '-' %>",
                     borrow_date: "<%= transaction.borrow_date %>",
                     expected_return_date: "<%= transaction.expected_return_date %>",
                     return_date: "<%= transaction.return_date || '' %>",
@@ -213,7 +213,7 @@
                     // Send list of books
                     books: [
                         <% transactions.forEach(tx => { %>
-                            { title: "<%= tx.Book.title %>" },
+                            { title: "<%= tx.Book ? tx.Book.title : 'Buku Dihapus' %>" },
                         <% }); %>
                     ]
                 };

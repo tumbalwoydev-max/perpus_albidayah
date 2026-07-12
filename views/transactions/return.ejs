@@ -18,11 +18,11 @@
         <div class="space-y-4 text-sm">
             <div class="flex justify-between">
                 <span class="text-gray-500">Judul Buku:</span>
-                <span class="font-medium text-gray-900 text-right"><%= transaction.Book.title %></span>
+                <span class="font-medium text-gray-900 text-right"><%= transaction.Book ? transaction.Book.title : 'Buku Dihapus' %></span>
             </div>
             <div class="flex justify-between">
                 <span class="text-gray-500">Peminjam:</span>
-                <span class="font-medium text-gray-900 text-right"><%= transaction.Student.name %> <br><span class="text-xs text-gray-400"><%= transaction.Student.nisn %></span></span>
+                <span class="font-medium text-gray-900 text-right"><%= transaction.Student ? transaction.Student.name : 'Siswa Dihapus' %> <br><span class="text-xs text-gray-400"><%= transaction.Student ? transaction.Student.nisn : '-' %></span></span>
             </div>
             <div class="flex justify-between">
                 <span class="text-gray-500">Tanggal Pinjam:</span>
